@@ -3,4 +3,11 @@ declare module '@squoosh/lib' {
     async close();
     ingestImage(path: string);
   }
+
+  export const encoders: Record<
+    string,
+    {
+      defaultEncoderOptions: any;
+    }
+  >;
 }

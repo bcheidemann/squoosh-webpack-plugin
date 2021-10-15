@@ -1,4 +1,4 @@
-import { SquooshEncodeOptions } from '../types';
+import { Codecs, SquooshEncodeOptions } from '../types';
 import { WorkerEvents } from './events';
 
 export type WorkerRequestDataTypes = {
@@ -8,7 +8,8 @@ export type WorkerRequestDataTypes = {
   [WorkerEvents.process]: {
     inputAssetPath: string;
     outDir: string;
-    encoding: SquooshEncodeOptions;
+    encoderOptions: SquooshEncodeOptions;
+    codec: Codecs;
     uuidNamespace: string;
   };
 };

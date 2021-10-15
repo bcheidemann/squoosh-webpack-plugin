@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { fork } from 'child_process';
 import * as uuid from 'uuid';
 import { DEFAULT_OPTIONS } from './options';
-import { SquooshPluginOptions } from './types';
+import { Codecs, SquooshPluginOptions } from './types';
 import { WorkerEvents } from './worker/events';
 import {
   WorkerRequest,
@@ -15,11 +15,11 @@ const workerPath = require.resolve('./worker');
 
 const PLUGIN_NAME = 'squoosh-webpack-plugin';
 
-export class SquooshPlugin {
+export default class SquooshPlugin<T extends Codecs = 'mozjpeg'> {
   private workerProcess = fork(workerPath);
   private options: SquooshPluginOptions;
 
-  constructor(options: Partial<SquooshPluginOptions> = {}) {
+  constructor(options: Partial<SquooshPluginOptions<T>> = {}) {
     this.workerProcess = fork(workerPath);
     this.options = {
       ...DEFAULT_OPTIONS,
@@ -38,10 +38,10 @@ export class SquooshPlugin {
         data,
         id: uuid.v4(),
       };
-      this.workerProcess.send(request);
-      this.workerProcess.on('message', (response: WorkerResponse<Event>) => {
+      const handler = (response: WorkerResponse<Event>) => {
         if (typeof response !== 'object') return;
         if (response.id === request.id) {
+          this.workerProcess.off('message', handler);
           if (response.event === request.event) {
             resolve(response.data);
           } else if (response.event === WorkerEvents.error) {
@@ -57,7 +57,9 @@ export class SquooshPlugin {
             );
           }
         }
-      });
+      }
+      this.workerProcess.send(request);
+      this.workerProcess.on('message', handler);
     });
   }
 
@@ -74,10 +76,11 @@ export class SquooshPlugin {
         async (resolveData: any) => {
           const resolvedPath = this.resolveRequest(resolveData);
           if (resolvedPath) {
-            const request = {
+            const request: WorkerRequestData<WorkerEvents.process> = {
               inputAssetPath: resolvedPath,
               outDir: this.options.outDir,
-              encoding: this.options.encodeOptions,
+              encoderOptions: this.options.encoderOptions,
+              codec: this.options.codec,
               uuidNamespace: this.options.uuidNamespace,
             };
             const { outputAssetPath } = await this.emitToWorker(

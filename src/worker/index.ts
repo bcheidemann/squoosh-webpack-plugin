@@ -1,9 +1,10 @@
-import { ImagePool } from '@squoosh/lib';
+import { ImagePool, encoders } from '@squoosh/lib';
 import { join, basename } from 'path';
 import { ensureDir, stat, writeFile } from 'fs-extra';
 import * as uuid from 'uuid';
 import { WorkerEvents } from './events';
 import { WorkerRequest, WorkerRequestData, WorkerResponseData } from './types';
+import { Codecs } from '../types';
 
 type MaybePromise<T> = Promise<T> | T;
 type WorkerEventHandler<Event extends WorkerEvents> = (
@@ -11,6 +12,15 @@ type WorkerEventHandler<Event extends WorkerEvents> = (
 ) => MaybePromise<WorkerResponseData<Event>>;
 type WorkerEventHandlers = {
   [Event in WorkerEvents]: WorkerEventHandler<Event>;
+};
+
+const codecExtensionMap: Record<Codecs, string> = {
+  mozjpeg: 'jpg',
+  webp: 'webp',
+  avif: 'avif',
+  jxl: 'jxl',
+  wp2: 'wp2',
+  oxipng: 'png',
 };
 
 let imagePool: ImagePool | undefined;
@@ -33,7 +43,8 @@ const handlers: WorkerEventHandlers = {
   async [WorkerEvents.process]({
     inputAssetPath,
     outDir,
-    encoding,
+    encoderOptions,
+    codec,
     uuidNamespace,
   }) {
     // Ensure image pool was initialised
@@ -41,19 +52,27 @@ const handlers: WorkerEventHandlers = {
       throw new Error('Image pool was not initialised.');
     }
 
+    // Create squoosh encoder options object
+    const squooshEncoderOptions = {
+      [codec]: {
+        ...encoders[codec].defaultEncoderOptions,
+        ...encoderOptions,
+      },
+    };
+
     // Ensure output dir exists
     await ensureDir(outDir);
 
     // Generate the output file path
     const inputFileName = basename(inputAssetPath);
-    const serialisedEncoding = JSON.stringify(encoding);
+    const serialisedEncoding = JSON.stringify(squooshEncoderOptions);
     const outputFileId = uuid.v5(
-      inputAssetPath + serialisedEncoding,
+      inputAssetPath + serialisedEncoding + codec,
       uuidNamespace
     );
     const outputAssetPath = join(
       outDir,
-      `${inputFileName}.${outputFileId}.jpeg`
+      `${inputFileName}.${outputFileId}.${codecExtensionMap[codec]}`
     );
 
     // Check if the output file path exists
@@ -74,8 +93,8 @@ const handlers: WorkerEventHandlers = {
     const image = imagePool.ingestImage(inputAssetPath);
     await image.decoded;
     await image.preprocess();
-    await image.encode(encoding);
-    const { binary: rawEncodedImage } = await image.encodedWith.mozjpeg;
+    await image.encode(squooshEncoderOptions);
+    const { binary: rawEncodedImage } = await image.encodedWith[codec];
 
     // Save the file
     await writeFile(outputAssetPath, rawEncodedImage);

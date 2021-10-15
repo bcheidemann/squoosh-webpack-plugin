@@ -1,15 +1,14 @@
-export type OutputFormat = 'mozjpeg' | 'test';
-
-export type SquooshEncodeOptions = Partial<
-  Record<OutputFormat, Record<string, any>>
->;
-
-export type SquooshPluginOptions = {
-  dirs: Array<string>;
-  outDir: string;
-  include: RegExp;
-  requestPrefix?: string;
-  uuidNamespace: string;
-  encodeOptions: SquooshEncodeOptions;
-  outputFormat: OutputFormat; // TODO: add support for more output formats
-};
+export { SquooshPluginOptions } from './plugin-options';
+export { SquooshEncodeOptions, Codecs } from './encoder-options';
+export {
+  MozJpegColorSpace,
+  MozJPEGEncodeOptions,
+  WebPEncodeOptions,
+  AVIFTune,
+  AvifEncodeOptions,
+  JxlEncodeOptions,
+  UVMode,
+  Csp,
+  WP2EncodeOptions,
+  OxiPngEncodeOptions,
+} from './squoosh';
