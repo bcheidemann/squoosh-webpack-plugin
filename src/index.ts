@@ -11,6 +11,8 @@ import {
   WorkerResponseData,
 } from './worker/types';
 
+export * from './types';
+
 const workerPath = require.resolve('./worker');
 
 const PLUGIN_NAME = 'squoosh-webpack-plugin';
@@ -57,7 +59,7 @@ export default class SquooshPlugin<T extends Codecs = 'mozjpeg'> {
             );
           }
         }
-      }
+      };
       this.workerProcess.send(request);
       this.workerProcess.on('message', handler);
     });
