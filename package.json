@@ -6,6 +6,8 @@
   "scripts": {
     "build": "tsc",
     "build:docs": "typedoc",
+    "prepare-publish": "ts-node ./scripts/prepare-publish.ts",
+    "run-publish": "npm run prepare-publish && npm publish ./npm --access public",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,6 +31,7 @@
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^16.10.3",
     "@types/uuid": "^8.3.1",
+    "ts-node": "^10.3.0",
     "typedoc": "^0.22.5",
     "typescript": "^4.4.3"
   },
