@@ -1,2 +1,2 @@
 FROM halverneus/static-file-server:latest
-ADD . /web
+ADD docs /web
