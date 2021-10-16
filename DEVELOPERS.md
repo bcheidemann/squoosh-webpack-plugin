@@ -1,5 +1,11 @@
 # Documentation for Developers
 
+## Publishing to NPM
+
+Run the run-publish script:
+
+`npm run run-publish`
+
 ## Publishing to Digital Ocean
 
 Before you begin, you will need to install and configure `doctl`. A guide can be found [here](https://docs.digitalocean.com/reference/doctl/how-to/install/).
