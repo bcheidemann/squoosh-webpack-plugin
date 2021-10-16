@@ -17,7 +17,7 @@ const workerPath = require.resolve('./worker');
 
 const PLUGIN_NAME = 'squoosh-webpack-plugin';
 
-export default class SquooshPlugin<T extends Codecs = 'mozjpeg'> {
+export class SquooshPlugin<T extends Codecs = 'mozjpeg'> {
   private workerProcess = fork(workerPath);
   private options: SquooshPluginOptions;
 
