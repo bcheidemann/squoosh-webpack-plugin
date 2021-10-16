@@ -31,7 +31,7 @@ Planned features for this plugin are as follows:
 
 ## Documentation
 
-Documentation for this project is available [here](https://github.com/bcheidemann/squoosh-webpack-plugin/blob/master/docs/index.html).
+Documentation for this project is available [here](https://github.com/bcheidemann/squoosh-webpack-plugin/blob/master/docs/index.html). I plan to host this somewhere soon but for now you will need to clone the repo and open `index.html` in a browser.
 
 ## Contributing
 
