@@ -33,7 +33,7 @@ Planned features for this plugin are as follows:
 
 ## Documentation
 
-Documentation for this project is available [here](https://squoosh-webpack-plugin-docs-apc7q.ondigitalocean.app/).
+Documentation for this project is available [here](https://squoosh-webpack-plugin.info/).
 
 ## Basic Usage
 
