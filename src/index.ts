@@ -26,6 +26,7 @@ export class SquooshPlugin<T extends Codecs = 'mozjpeg'> {
     this.options = {
       ...DEFAULT_OPTIONS,
       ...options,
+      outDir: resolve(process.cwd(), options.outDir || DEFAULT_OPTIONS.outDir),
     };
     this.emitToWorker(WorkerEvents.stop, null);
   }
