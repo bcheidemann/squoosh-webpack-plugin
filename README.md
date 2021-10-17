@@ -90,7 +90,7 @@ new SquooshPlugin({
 });
 ```
 
-For more information on options, see the [documentation](https://squoosh-webpack-plugin-docs-apc7q.ondigitalocean.app/) and [Squoosh github page](https://github.com/GoogleChromeLabs/squoosh).
+For more information on options, see the [documentation](https://squoosh-webpack-plugin.info/) and [Squoosh github page](https://github.com/GoogleChromeLabs/squoosh).
 
 ## Contributing
 
