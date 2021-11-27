@@ -22,6 +22,9 @@ export class BaseResolverExtension implements Extension {
         // Trim the prefix
         request = request.substr(context.options.requestPrefix.length);
       } else {
+        // Exclude the request
+        options.include = false;
+
         // Hand over to next plugin
         return options;
       }
@@ -51,12 +54,10 @@ export class BaseResolverExtension implements Extension {
       const matchAny = match(context.options.include, absoluteRequestPath, {
         match: Match.ANY,
       });
-      if (!matchAny) {
-        // Exclude the request
-        options.include = false;
 
-        // Hand over to next plugin
-        return options;
+      if (matchAny) {
+        // Exclude the request
+        options.include = true;
       }
     }
 
@@ -65,6 +66,7 @@ export class BaseResolverExtension implements Extension {
       const matchAny = match(context.options.exclude, absoluteRequestPath, {
         match: Match.ANY,
       });
+      
       if (matchAny) {
         // Exclude the request
         options.include = false;

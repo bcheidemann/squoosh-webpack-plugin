@@ -121,7 +121,10 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
     });
 
     compiler.hooks.done.tapPromise(PLUGIN_NAME, async (stats) => {
-      this.emitToWorker(WorkerEvents.stop, null);
+      await this.emitToWorker(WorkerEvents.stop, null);
+      if (this.workerProcess) {
+        this.workerProcess.kill();
+      }
     });
   }
 
