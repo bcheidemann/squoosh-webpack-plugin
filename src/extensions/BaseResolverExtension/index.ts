@@ -1,0 +1,1 @@
+export { BaseResolverExtension as default } from './BaseResolverExtension';

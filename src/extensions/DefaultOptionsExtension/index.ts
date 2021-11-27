@@ -1,0 +1,1 @@
+export { DefaultOptionsExtension as default } from './DefaultOptionsExtension';

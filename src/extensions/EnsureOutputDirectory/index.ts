@@ -1,0 +1,1 @@
+export { EnsureOutputDirectoryExtension as default } from './EnsureOutputDirectoryExtension';

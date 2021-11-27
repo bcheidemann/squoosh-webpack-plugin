@@ -25,7 +25,7 @@ const codecExtensionMap: Record<Codecs, string> = {
 
 let imagePool: ImagePool | undefined;
 
-const handlers: WorkerEventHandlers = {
+export const handlers: WorkerEventHandlers = {
   [WorkerEvents.error]() {},
   [WorkerEvents.start]() {
     if (!imagePool) {
@@ -131,7 +131,11 @@ process.on(
           console.error(err);
         });
     } else {
-      console.warn(`Unhandled event squoosh worker (${event}).`);
+      process.send?.({
+        event: 'error',
+        data: `Unhandled event in squoosh worker (${event}).`,
+        id,
+      });
     }
   }
 );
