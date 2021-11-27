@@ -1,5 +1,5 @@
 import { resolve } from 'path';
-import { fork } from 'child_process';
+import { ChildProcess, fork } from 'child_process';
 import * as uuid from 'uuid';
 import { Codecs, SquooshPluginOptions } from './types';
 import { WorkerEvents } from './worker/events';
@@ -12,7 +12,7 @@ import {
 import { Compiler } from 'webpack';
 import { DEFAULT_EXTENSIONS } from './extensions/default.extensions';
 import { sortLowHigh } from './utils/sort';
-import { Extension, HookContext } from './types/extensions';
+import { Extension, HookContext, PrepareOptions, RequestOptions } from './types/extensions';
 import { handlers } from './worker';
 
 export * from './types';
@@ -22,14 +22,11 @@ const workerPath = require.resolve('./worker');
 const PLUGIN_NAME = 'squoosh-webpack-plugin';
 
 export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
-  private workerProcess = fork(workerPath);
+  private workerProcess: ChildProcess | null = null;
   private options: Promise<SquooshPluginOptions>;
 
   constructor(options?: Partial<SquooshPluginOptions<Codec>>) {
     this.options = this.validateOptions(options as SquooshPluginOptions);
-
-    this.workerProcess = fork(workerPath);
-    // TODO: default options plugins
   }
 
   async emitToWorker<Event extends WorkerEvents>(
@@ -38,6 +35,10 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
   ): Promise<WorkerResponseData<Event>> {
     const options = await this.options;
     if (options.useWorker) {
+      if (!this.workerProcess) {
+        this.workerProcess = fork(workerPath);
+      }
+      const worker = this.workerProcess as ChildProcess;
       return await new Promise<WorkerResponseData<Event>>((resolve, reject) => {
         const request: WorkerRequest<Event> = {
           event,
@@ -47,7 +48,7 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
         const handler = (response: WorkerResponse<Event>) => {
           if (typeof response !== 'object') return;
           if (response.id === request.id) {
-            this.workerProcess.off('message', handler);
+            worker.off('message', handler);
             if (response.event === request.event) {
               resolve(response.data);
             } else if (response.event === WorkerEvents.error) {
@@ -64,8 +65,8 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
             }
           }
         };
-        this.workerProcess.send(request);
-        this.workerProcess.on('message', handler);
+        worker.send(request);
+        worker.on('message', handler);
       });
     }
     else {
@@ -79,21 +80,42 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
     });
     compiler.hooks.normalModuleFactory.tap(PLUGIN_NAME, (factory) => {
       factory.hooks.resolve.tapPromise(PLUGIN_NAME, async (resolveData) => {
-        const options = await this.options;
-        const resolvedPath = await this.resolveRequest(resolveData);
-        if (resolvedPath) {
-          const request: WorkerRequestData<WorkerEvents.process> = {
-            inputAssetPath: resolvedPath,
-            outDir: options.outDir,
-            encoderOptions: options.encoderOptions,
+        const baseRequest: RequestOptions = {
+          include: false, // Exclude by default
+          context: resolveData.context,
+          request: resolveData.request,
+        };
+        const requestData = await this.applyRequestHooks(baseRequest);
+
+        if (requestData.include) {
+          const options = await this.options;
+          const inputPath = resolve(requestData.context, requestData.request);
+          const processOptions: PrepareOptions = await this.applyPrepareHooks({
+            skip: false, // No caching by default
+            inputPath,
+            outputPath: undefined,
             codec: options.codec,
-            uuidNamespace: options.uuidNamespace,
-          };
-          const { outputAssetPath } = await this.emitToWorker(
-            WorkerEvents.process,
-            request
-          );
-          resolveData.request = outputAssetPath;
+            encoderOptions: options.encoderOptions,
+          });
+
+          if (!processOptions.outputPath) {
+            throw new Error('At least one "prepare" hook must set the "outputPath".');
+          }
+
+          resolveData.request = processOptions.outputPath;
+
+          if (!processOptions.skip) {
+            const processRequest: WorkerRequestData<WorkerEvents.process> = {
+              inputPath: processOptions.inputPath,
+              outputPath: processOptions.outputPath,
+              codec: processOptions.codec,
+              encoderOptions: processOptions.encoderOptions,
+            };
+            await this.emitToWorker(
+              WorkerEvents.process,
+              processRequest,
+            );
+          }
         }
       });
     });
@@ -101,30 +123,6 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
     compiler.hooks.done.tapPromise(PLUGIN_NAME, async (stats) => {
       this.emitToWorker(WorkerEvents.stop, null);
     });
-  }
-
-  async resolveRequest(resolveData: any) {
-    const options = await this.options;
-    if (
-      !options.requestPrefix ||
-      resolveData.request.startsWith(options.requestPrefix)
-    ) {
-      const relativePath = options.requestPrefix
-        ? resolveData.request.substr(options.requestPrefix.length)
-        : resolveData.request;
-      const absolutePath = resolve(resolveData.context, relativePath);
-      if (!options.dirs || options.dirs.length === 0) {
-        return absolutePath;
-      } else if (
-        options.dirs.some((dir) => {
-          const searchDir = resolve(process.cwd(), dir);
-          return absolutePath.startsWith(searchDir);
-        })
-      ) {
-        return absolutePath;
-      }
-    }
-    return null;
   }
 
   private async validateOptions(options?: Partial<SquooshPluginOptions>) {
@@ -159,22 +157,57 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
       (extension) => extension.order || 0
     );
 
-    return await this.applyInitializeExtensions(baseOptions);
+    return await this.applyInitializeHooks(baseOptions);
   }
 
-  private async applyInitializeExtensions(
+  private async applyInitializeHooks(
     baseOptions: Partial<SquooshPluginOptions>
   ) {
     const extensions = baseOptions.extensions as Array<Extension>;
+
     let options = baseOptions;
     for (const extension of extensions) {
       if (extension.initialize) {
-        const context = {
+        const context = Object.freeze({
           options,
-        } as HookContext;
+        }) as HookContext;
         options = await Promise.resolve(extension.initialize(context, options));
       }
     }
     return options as SquooshPluginOptions;
+  }
+
+  private async applyRequestHooks(baseRequest: RequestOptions) {
+    const options = await this.options;
+    const context: HookContext = Object.freeze({
+      options,
+    });
+    const extensions = options.extensions as Array<Extension>;
+
+    let request = baseRequest;
+    for (const extension of extensions) {
+      if (extension.request) {
+        request = await Promise.resolve(extension.request(context, request));
+      }
+    }
+
+    return request;
+  }
+
+  private async applyPrepareHooks(baseOptions: PrepareOptions) {
+    const options = await this.options;
+    const context: HookContext = Object.freeze({
+      options,
+    });
+    const extensions = options.extensions as Array<Extension>;
+
+    let prepareOptions = baseOptions;
+    for (const extension of extensions) {
+      if (extension.prepare) {
+        prepareOptions = await Promise.resolve(extension.prepare(context, prepareOptions));
+      }
+    }
+
+    return prepareOptions;
   }
 }

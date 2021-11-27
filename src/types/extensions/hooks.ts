@@ -10,9 +10,9 @@ export interface RequestOptions {
 }
 
 export interface PrepareOptions<Codec extends Codecs = Codecs> {
-  inputPath: string;
-  outputPath: string;
   skip: boolean; // this can be used for caching
+  inputPath: string;
+  outputPath?: string;
   codec: Codec;
   encoderOptions: SquooshEncodeOptions<Codec>;
 }

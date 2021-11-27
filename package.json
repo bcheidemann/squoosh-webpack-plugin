@@ -28,6 +28,7 @@
   },
   "homepage": "https://squoosh-webpack-plugin.info/",
   "devDependencies": {
+    "@types/checksum": "^0.1.33",
     "@types/fs-extra": "^9.0.13",
     "@types/node": "^16.10.3",
     "@types/uuid": "^8.3.1",
@@ -38,6 +39,7 @@
   "dependencies": {
     "@squoosh/lib": "^0.4.0",
     "@types/webpack": "^5.28.0",
+    "checksum": "^1.0.0",
     "fs-extra": "^10.0.0",
     "uuid": "^8.3.2"
   }

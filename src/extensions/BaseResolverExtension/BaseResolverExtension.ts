@@ -4,7 +4,8 @@ import { RequestOptions, Extension, HookContext } from '../../types/extensions';
 import { Match, match } from '../../utils/match';
 
 export class BaseResolverExtension implements Extension {
-  public order: number = Number.MIN_SAFE_INTEGER; // Ensure this extension runs first
+  public name = 'BaseResolverExtension';
+  public order = Number.MIN_SAFE_INTEGER; // Ensure this extension runs first
 
   public request(context: HookContext, options: RequestOptions) {
     // Request is excluded by default
