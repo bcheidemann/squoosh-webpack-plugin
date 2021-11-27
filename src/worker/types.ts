@@ -6,11 +6,10 @@ export type WorkerRequestDataTypes = {
   [WorkerEvents.start]: null;
   [WorkerEvents.stop]: null;
   [WorkerEvents.process]: {
-    inputAssetPath: string;
-    outDir: string;
-    encoderOptions: SquooshEncodeOptions;
+    inputPath: string;
+    outputPath: string;
     codec: Codecs;
-    uuidNamespace: string;
+    encoderOptions: SquooshEncodeOptions;
   };
 };
 
@@ -27,9 +26,7 @@ export type WorkerResponseDataTypes = {
   [WorkerEvents.error]: any;
   [WorkerEvents.start]: null;
   [WorkerEvents.stop]: null;
-  [WorkerEvents.process]: {
-    outputAssetPath: string;
-  };
+  [WorkerEvents.process]: null;
 };
 
 export type WorkerResponseData<Event extends WorkerEvents> =

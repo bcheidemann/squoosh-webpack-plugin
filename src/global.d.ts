@@ -1,3 +1,5 @@
+/// <reference path="../node_modules/webpack/types.d.ts" />
+
 declare module '@squoosh/lib' {
   export class ImagePool {
     async close();

@@ -12,3 +12,4 @@ export {
   WP2EncodeOptions,
   OxiPngEncodeOptions,
 } from './squoosh';
+export * from './extensions';
