@@ -14,6 +14,7 @@ export const DEFAULT_OPTIONS: SquooshPluginOptions = {
   dirs: undefined,
   
   // Used by DefaultOutputPathExtension
-  outDir: 'dist',
+  outDir: undefined,
   uuidNamespace: 'bc707c24-ee40-4f77-816e-15f0c76a81de',
+  preserveFileName: false,
 };

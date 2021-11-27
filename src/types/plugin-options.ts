@@ -17,6 +17,7 @@ export type SquooshPluginOptions<Codec extends Codecs = Codecs> = {
   dirs?: Array<string>;
 
   // Used by DefaultOutputPathExtension
-  outDir: string;
+  outDir?: string;
   uuidNamespace: string;
+  preserveFileName?: boolean;
 };

@@ -25,7 +25,7 @@ Build the docker image:
 
 `docker build -t squoosh-webpack-plugin-documentation .`
 
-Optionally, test the docker image by running the following command and going to [http://localhost:8080/docs/](http://localhost:8080/docs/):
+Optionally, test the docker image by running the following command and going to [http://localhost:8080/](http://localhost:8080/):
 
 `docker run -d -p 8080:8080 squoosh-webpack-plugin-documentation`
 
