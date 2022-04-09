@@ -8,7 +8,7 @@
     "build:docs": "typedoc",
     "prepare-publish": "ts-node ./scripts/prepare-publish.ts",
     "run-publish": "npm run prepare-publish && npm publish ./npm --access public",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -28,11 +28,16 @@
   },
   "homepage": "https://squoosh-webpack-plugin.info/",
   "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
     "@types/checksum": "^0.1.33",
     "@types/fs-extra": "^9.0.13",
+    "@types/jest": "^27.4.1",
     "@types/node": "^16.10.3",
     "@types/uuid": "^8.3.1",
     "@types/webpack": "^5.28.0",
+    "babel-jest": "^27.5.1",
+    "jest": "^27.5.1",
+    "ts-jest": "^27.1.4",
     "ts-node": "^10.3.0",
     "typedoc": "^0.22.5",
     "typescript": "^4.4.3"
