@@ -1,4 +1,5 @@
 /// <reference path="../node_modules/webpack/types.d.ts" />
+/// <reference path="../node_modules/@types/jest/index.d.ts" />
 
 declare module '@squoosh/lib' {
   export class ImagePool {

@@ -9,11 +9,14 @@ import {
   WorkerResponse,
   WorkerResponseData,
 } from './worker/types';
-import { Compiler } from 'webpack';
+import { Compiler as Compiler4, Plugin } from 'webpack4';
+import { Compiler as Compiler5, WebpackPluginInstance } from 'webpack5';
 import { DEFAULT_EXTENSIONS } from './extensions/default.extensions';
 import { sortLowHigh } from './utils/sort';
 import { Extension, HookContext, PrepareOptions, RequestOptions } from './types/extensions';
 import { handlers } from './worker';
+import { getWebpackVersion } from './utils/getWebpackVersion';
+import { ResolveData } from './types/webpack';
 
 export * from './types';
 
@@ -29,7 +32,7 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
     this.options = this.validateOptions(options as SquooshPluginOptions);
   }
 
-  async emitToWorker<Event extends WorkerEvents>(
+  private async emitToWorker<Event extends WorkerEvents>(
     event: Event,
     data: WorkerRequestData<Event>
   ): Promise<WorkerResponseData<Event>> {
@@ -74,59 +77,85 @@ export class SquooshPlugin<Codec extends Codecs = 'mozjpeg'> {
     }
   }
 
-  apply(compiler: Compiler) {
-    compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, async (params) => {
-      await this.emitToWorker(WorkerEvents.start, null);
-    });
-    compiler.hooks.normalModuleFactory.tap(PLUGIN_NAME, (factory) => {
-      factory.hooks.resolve.tapPromise(PLUGIN_NAME, async (resolveData) => {
-        const baseRequest: RequestOptions = {
-          include: false, // Exclude by default
-          context: resolveData.context,
-          request: resolveData.request,
-        };
-        const requestData = await this.applyRequestHooks(baseRequest);
-
-        if (requestData.include) {
-          const options = await this.options;
-          const inputPath = resolve(requestData.context, requestData.request);
-          const processOptions: PrepareOptions = await this.applyPrepareHooks({
-            skip: false, // No caching by default
-            inputPath,
-            outputPath: undefined,
-            codec: options.codec,
-            encoderOptions: options.encoderOptions,
-          });
-
-          if (!processOptions.outputPath) {
-            throw new Error('At least one "prepare" hook must set the "outputPath".');
-          }
-
-          resolveData.request = processOptions.outputPath;
-
-          if (!processOptions.skip) {
-            const processRequest: WorkerRequestData<WorkerEvents.process> = {
-              inputPath: processOptions.inputPath,
-              outputPath: processOptions.outputPath,
-              codec: processOptions.codec,
-              encoderOptions: processOptions.encoderOptions,
-            };
-            await this.emitToWorker(
-              WorkerEvents.process,
-              processRequest,
-            );
-          }
-        }
-      });
-    });
-
-    compiler.hooks.done.tapPromise(PLUGIN_NAME, async (stats) => {
-      await this.emitToWorker(WorkerEvents.stop, null);
-      if (this.workerProcess) {
-        this.workerProcess.kill();
-      }
-    });
+  apply(compiler: any) {
+    switch (getWebpackVersion(compiler)) {
+      case 4:
+        return this.webpack4Apply(compiler);
+      case 5:
+        return this.webpack5Apply(compiler);
+    }
   }
+
+  private webpack4Apply(compiler: Compiler4) {
+    compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, this.handleBeforeCompile);
+
+    compiler.hooks.normalModuleFactory.tap(PLUGIN_NAME, (factory) => {
+      factory.hooks.beforeResolve.tapPromise(PLUGIN_NAME, this.handleResolve);
+    });
+
+    compiler.hooks.done.tapPromise(PLUGIN_NAME, this.handleStop);
+  }
+
+  private webpack5Apply(compiler: Compiler5) {
+    compiler.hooks.beforeCompile.tapPromise(PLUGIN_NAME, this.handleBeforeCompile);
+
+    compiler.hooks.normalModuleFactory.tap(PLUGIN_NAME, (factory) => {
+      factory.hooks.resolve.tapPromise(PLUGIN_NAME, this.handleResolve);
+    });
+
+    compiler.hooks.done.tapPromise(PLUGIN_NAME, this.handleStop);
+  }
+
+  private handleBeforeCompile = async () => {
+    await this.emitToWorker(WorkerEvents.start, null);
+  };
+
+  private handleResolve = async (resolveData: ResolveData) => {
+    const baseRequest: RequestOptions = {
+      include: false, // Exclude by default
+      context: resolveData.context,
+      request: resolveData.request,
+    };
+    const requestData = await this.applyRequestHooks(baseRequest);
+
+    if (requestData.include) {
+      const options = await this.options;
+      const inputPath = resolve(requestData.context, requestData.request);
+      const processOptions: PrepareOptions = await this.applyPrepareHooks({
+        skip: false, // No caching by default
+        inputPath,
+        outputPath: undefined,
+        codec: options.codec,
+        encoderOptions: options.encoderOptions,
+      });
+
+      if (!processOptions.outputPath) {
+        throw new Error('At least one "prepare" hook must set the "outputPath".');
+      }
+
+      resolveData.request = processOptions.outputPath;
+
+      if (!processOptions.skip) {
+        const processRequest: WorkerRequestData<WorkerEvents.process> = {
+          inputPath: processOptions.inputPath,
+          outputPath: processOptions.outputPath,
+          codec: processOptions.codec,
+          encoderOptions: processOptions.encoderOptions,
+        };
+        await this.emitToWorker(
+          WorkerEvents.process,
+          processRequest,
+        );
+      }
+    }
+  };
+
+  private handleStop =  async () => {
+    await this.emitToWorker(WorkerEvents.stop, null);
+    if (this.workerProcess) {
+      this.workerProcess.kill();
+    }
+  };
 
   private async validateOptions(options?: Partial<SquooshPluginOptions>) {
     const baseOptions = {
