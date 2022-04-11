@@ -8,7 +8,8 @@
     "build:docs": "typedoc",
     "prepare-publish": "ts-node ./scripts/prepare-publish.ts",
     "run-publish": "npm run prepare-publish && npm publish ./npm --access public",
-    "test": "jest"
+    "test": "jest",
+    "test5": "jest"
   },
   "repository": {
     "type": "git",
@@ -27,6 +28,9 @@
     "url": "https://github.com/bcheidemann/squoosh-webpack-plugin/issues"
   },
   "homepage": "https://squoosh-webpack-plugin.info/",
+  "peerDependencies": {
+    "webpack": "4.x || 5.x"
+  },
   "devDependencies": {
     "@babel/preset-env": "^7.16.11",
     "@types/checksum": "^0.1.33",
@@ -34,17 +38,21 @@
     "@types/jest": "^27.4.1",
     "@types/node": "^16.10.3",
     "@types/uuid": "^8.3.1",
-    "@types/webpack": "^5.28.0",
+    "@types/webpack4": "npm:@types/webpack@^4.41.26",
+    "@types/webpack5": "npm:@types/webpack@^5.28.0",
     "babel-jest": "^27.5.1",
+    "checksum": "^1.0.0",
     "jest": "^27.5.1",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.3.0",
     "typedoc": "^0.22.5",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.3",
+    "url-loader": "^4.1.1",
+    "webpack4": "npm:webpack@^4.46.0",
+    "webpack5": "npm:webpack@^5.72.0"
   },
   "dependencies": {
     "@squoosh/lib": "^0.4.0",
-    "checksum": "^1.0.0",
     "fs-extra": "^10.0.0",
     "uuid": "^8.3.2"
   }

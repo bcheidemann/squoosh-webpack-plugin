@@ -2,7 +2,6 @@ import { ImagePool, encoders } from '@squoosh/lib';
 import { writeFile } from 'fs-extra';
 import { WorkerEvents } from './events';
 import { WorkerRequest, WorkerRequestData, WorkerResponseData } from './types';
-import { Codecs } from '../types';
 
 type MaybePromise<T> = Promise<T> | T;
 type WorkerEventHandler<Event extends WorkerEvents> = (

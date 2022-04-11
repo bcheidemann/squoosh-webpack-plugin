@@ -6,5 +6,5 @@ module.exports = {
   },
   roots: [
     "./src/__test__/",
-  ]
+  ],
 };
