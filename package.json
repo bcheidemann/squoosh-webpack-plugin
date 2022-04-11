@@ -1,6 +1,6 @@
 {
   "name": "squoosh-webpack-plugin",
-  "version": "2.0.0-alpha.1",
+  "version": "2.1.1",
   "description": "A webpack plugin for squoosh",
   "main": "dist/index.js",
   "scripts": {
@@ -41,19 +41,18 @@
     "@types/webpack4": "npm:@types/webpack@^4.41.26",
     "@types/webpack5": "npm:@types/webpack@^5.28.0",
     "babel-jest": "^27.5.1",
-    "checksum": "^1.0.0",
     "jest": "^27.5.1",
     "ts-jest": "^27.1.4",
     "ts-node": "^10.3.0",
     "typedoc": "^0.22.5",
     "typescript": "^4.4.3",
-    "url-loader": "^4.1.1",
     "webpack4": "npm:webpack@^4.46.0",
     "webpack5": "npm:webpack@^5.72.0"
   },
   "dependencies": {
     "@squoosh/lib": "^0.4.0",
     "fs-extra": "^10.0.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "checksum": "^1.0.0"
   }
 }
